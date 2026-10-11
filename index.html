@@ -12,10 +12,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Cumples">
 <style>
-:root{--bg:#faf8f5;--card:#fff;--tx:#2a2622;--mut:#7a7168;--bd:#e6dfd6;--ac:#d9534f;--ok:#2e8b57;--okbg:#e4f4ea;--hi:#fff4d6;--pend:#d98a1f;--pendbg:#fff1dc;
+:root{--bg:#ecdfd1;--card:#fff;--tx:#2a2622;--mut:#6b6258;--bd:#cdb9a5;--ac:#d9534f;--ok:#2e8b57;--okbg:#e4f4ea;--hi:#fff4d6;--pend:#d98a1f;--pendbg:#fff1dc;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1917;--card:#262321;--tx:#f1ece6;--mut:#a39a90;--bd:#3a3631;--ac:#ef7a76;--ok:#5fc48a;--okbg:#1f3a2b;--hi:#3d3417;--pend:#e8a345;--pendbg:#3a2b14}}
-:root[data-theme="dark"]{--bg:#1b1917;--card:#262321;--tx:#f1ece6;--mut:#a39a90;--bd:#3a3631;--ac:#ef7a76;--ok:#5fc48a;--okbg:#1f3a2b;--hi:#3d3417;--pend:#e8a345;--pendbg:#3a2b14}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121010;--card:#2b2724;--tx:#f1ece6;--mut:#b0a79d;--bd:#4d463f;--ac:#ef7a76;--ok:#5fc48a;--okbg:#1f3a2b;--hi:#3d3417;--pend:#e8a345;--pendbg:#3a2b14}}
+:root[data-theme="dark"]{--bg:#121010;--card:#2b2724;--tx:#f1ece6;--mut:#b0a79d;--bd:#4d463f;--ac:#ef7a76;--ok:#5fc48a;--okbg:#1f3a2b;--hi:#3d3417;--pend:#e8a345;--pendbg:#3a2b14}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:640px;margin:0 auto;padding:16px}
@@ -25,7 +25,7 @@ h3{font-size:.95rem;margin:14px 0 8px}
 h3.pendt{color:var(--pend);margin-top:4px}
 h3.okt{color:var(--ok)}
 #estado{display:block;color:var(--mut);font-size:.8rem;margin:0 0 .9em}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 input,select,button,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
 button{cursor:pointer;background:var(--ac);color:#fff;border:0;font-weight:600}
@@ -120,10 +120,23 @@ textarea{width:100%;min-height:110px;resize:vertical;margin-bottom:8px}
   <h2>Mensaje recordatorio</h2>
   <textarea id="msg" readonly></textarea>
   <div class="row">
-    <button id="copy">Copiar</button>
+    <button id="copy">Copiar mensaje</button>
+    <button class="ghost" id="copyAlias" hidden>Copiar alias</button>
     <button id="wa">Enviar por WhatsApp</button>
     <span id="copied" style="color:var(--ok);font-size:.9rem" hidden>¡Copiado!</span>
   </div>
+</div>
+
+<div class="card" id="imgCard" hidden>
+  <h2>Imagen de cumpleaños</h2>
+  <select id="selCumple" style="width:100%;margin-bottom:8px"></select>
+  <textarea id="dedic" style="min-height:80px">Que tengas un día hermoso, lleno de alegría. ¡Te deseamos lo mejor!</textarea>
+  <div class="row"><button id="mkImg">Crear imagen</button></div>
+  <div id="imgOutBox" hidden style="margin-top:12px">
+    <img id="imgOut" alt="Imagen de cumpleaños" style="width:100%;max-width:420px;border-radius:12px;border:1px solid var(--bd);display:block;margin-bottom:8px">
+    <div class="row"><button id="shImg">Compartir por WhatsApp</button><button class="ghost" id="dlImg">Descargar</button></div>
+  </div>
+  <p class="hint">Muestra los nombres de quienes ya marcaste como pagados (sin contar al cumpleañero). Podés editar la dedicatoria.</p>
 </div>
 
 <div class="card" id="formCard">
@@ -153,6 +166,11 @@ textarea{width:100%;min-height:110px;resize:vertical;margin-bottom:8px}
     <button class="ghost" id="resetMes">Usar el general</button>
   </div>
   <p class="hint">Si lo dejás vacío, ese mes usa el monto general. Sirve para cumpleaños especiales.</p>
+  <div class="row" style="margin-top:10px">
+    <span>Alias para transferir:</span>
+    <input id="alias" type="text" placeholder="ej: cumples.oficina" autocomplete="off" style="flex:1;min-width:160px">
+  </div>
+  <p class="hint">Se agrega al mensaje de WhatsApp para que cada persona sepa a dónde transferir.</p>
   <label class="chk"><input type="checkbox" id="bp"> El cumpleañero también aporta para su propio cumpleaños</label>
   <div class="row" style="margin-top:14px">
     <button class="ghost" id="imp" hidden>Importar datos de este navegador</button>
@@ -173,7 +191,7 @@ const CODE_KEY="cumples-codigo",OLD_KEY="cumples-oficina-v1",REFRESCO_MS=8000;
 const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
 let db=null,timer=null,editId=null;
-let S={people:[],amount:10000,bp:true,paid:{},amounts:{}};
+let S={people:[],amount:10000,bp:true,paid:{},amounts:{},alias:""};
 const $=id=>document.getElementById(id);
 const money=n=>"$"+Math.round(n).toLocaleString("es-AR");
 const pad=n=>String(n).padStart(2,"0");
@@ -200,7 +218,7 @@ async function load(){
   if(!c.data)throw new Error("codigo"); // sin fila = el código no pasó las reglas
   S.people=a.data.map(r=>({id:r.id,n:r.name,d:r.day,m:r.month}));
   S.paid={};b.data.forEach(r=>{S.paid[r.month_key+":"+r.person_id]=r.paid_on});
-  S.amount=+c.data.amount;S.bp=!!c.data.birthday_pays;S.amounts=c.data.month_amounts||{};
+  S.amount=+c.data.amount;S.bp=!!c.data.birthday_pays;S.amounts=c.data.month_amounts||{};S.alias=c.data.alias||"";
 }
 async function refrescarYa(){try{await load();setEstado(true)}catch(e){setEstado(false)}render()}
 async function refrescar(){
@@ -256,6 +274,7 @@ function armarMensaje(c){
   return "Hola! 👋 Recordatorio de la colecta de cumpleaños de "+MESES[m]+" 🎂\n"
     +"Cumplen: "+c.cum.map(p=>p.n+" ("+p.d+")").join(", ")+"\n"
     +"Aporte por cumpleaños: "+money(c.amt)+"\n"
+    +(S.alias?"Alias para transferir: "+S.alias+"\n":"")
     +"Todavía falta que aporten: "+pend.map(p=>p.n+" ("+money(c.owed(p))+")").join(", ")+"\n"
     +"¡Gracias!";
 }
@@ -299,13 +318,18 @@ function render(){
   $("montoMes").value=S.amounts[c.k]!=null?S.amounts[c.k]:"";
   $("montoMes").placeholder=S.amount;
   $("bp").checked=S.bp;
+  $("alias").value=S.alias;$("copyAlias").hidden=!S.alias;
   $("msg").value=armarMensaje(c);
   $("recCard").hidden=!c.cum.length;
+  const sel=$("selCumple"),antes=sel.value;
+  sel.innerHTML=c.cum.map(p=>`<option value="${p.id}">🎂 ${esc(p.n)} (${p.d} de ${MESES[m]})</option>`).join("");
+  if(c.cum.some(p=>String(p.id)===antes))sel.value=antes;
+  $("imgCard").hidden=!c.cum.length;
   renderAviso();
 }
 
-$("prev").onclick=()=>{m--;if(m<0){m=11;y--}render()};
-$("next").onclick=()=>{m++;if(m>11){m=0;y++}render()};
+$("prev").onclick=()=>{m--;if(m<0){m=11;y--}$("imgOutBox").hidden=true;render()};
+$("next").onclick=()=>{m++;if(m>11){m=0;y++}$("imgOutBox").hidden=true;render()};
 
 /* ====== Pagos ====== */
 $("board").onclick=e=>{
@@ -378,6 +402,7 @@ $("montoMes").onchange=()=>{
 };
 $("resetMes").onclick=()=>{const mp={...S.amounts};delete mp[y+"-"+m];guardar(db.from("settings").update({month_amounts:mp}).eq("id",1))};
 $("bp").onchange=()=>guardar(db.from("settings").update({birthday_pays:$("bp").checked}).eq("id",1));
+$("alias").onchange=()=>guardar(db.from("settings").update({alias:$("alias").value.trim()}).eq("id",1));
 
 /* ====== Recordatorio ====== */
 $("copy").onclick=async()=>{
@@ -385,6 +410,11 @@ $("copy").onclick=async()=>{
   try{await navigator.clipboard.writeText(txt)}
   catch(e){$("msg").removeAttribute("readonly");$("msg").select();document.execCommand("copy");$("msg").setAttribute("readonly","")}
   $("copied").hidden=false;setTimeout(()=>{$("copied").hidden=true},1800);
+};
+$("copyAlias").onclick=async()=>{
+  try{await navigator.clipboard.writeText(S.alias)}catch(e){prompt("Copiá el alias:",S.alias)}
+  $("copied").textContent="¡Alias copiado!";$("copied").hidden=false;
+  setTimeout(()=>{$("copied").hidden=true;$("copied").textContent="¡Copiado!"},1800);
 };
 $("wa").onclick=()=>{window.open("https://wa.me/?text="+encodeURIComponent($("msg").value),"_blank")};
 
@@ -405,6 +435,78 @@ $("imp").onclick=async()=>{
   viejo=null;$("imp").hidden=true;
   await refrescarYa();alert("Listo: datos importados.");
 };
+
+/* ====== Imagen de cumpleaños ====== */
+const FONT="system-ui,-apple-system,'Segoe UI','Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif";
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function envolver(g,txt,maxW){
+  const out=[];let l="";
+  txt.split(/\s+/).filter(Boolean).forEach(pal=>{const t=l?l+" "+pal:pal;if(g.measureText(t).width>maxW&&l){out.push(l);l=pal}else l=t});
+  if(l)out.push(l);return out;
+}
+const unir=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" y "+a[a.length-1];
+function dibujarTarjeta(g,W,H,nombre,mensaje,nombres){
+  const gr=g.createLinearGradient(0,0,W,H);gr.addColorStop(0,"#d9534f");gr.addColorStop(1,"#f2a65a");
+  g.fillStyle=gr;g.fillRect(0,0,W,H);
+  let seed=[...nombre].reduce((a,ch)=>a+ch.charCodeAt(0),7);
+  const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+  const cols=["#ffffff","#ffd166","#06d6a0","#ef476f","#118ab2"];
+  for(let i=0;i<70;i++){g.fillStyle=cols[i%cols.length];g.globalAlpha=.55;g.beginPath();g.arc(rnd()*W,rnd()*H,6+rnd()*14,0,7);g.fill()}
+  g.globalAlpha=1;
+  const x=70,y=140,w=W-140,h=H-280;
+  g.save();g.shadowColor="rgba(0,0,0,.25)";g.shadowBlur=40;g.shadowOffsetY=12;g.fillStyle="#fffaf4";rr(g,x,y,w,h,48);g.fill();g.restore();
+  g.textAlign="center";g.textBaseline="alphabetic";
+  let ty=y+120;
+  g.fillStyle="#d9534f";g.font="700 64px "+FONT;g.fillText("🎉 ¡Feliz cumpleaños! 🎉",W/2,ty);
+  let fs=120;
+  while(fs>48){g.font="800 "+fs+"px "+FONT;if(g.measureText(nombre).width<=w-120)break;fs-=4}
+  ty+=30+fs;g.fillStyle="#2a2622";g.fillText(nombre,W/2,ty);
+  g.font="400 38px "+FONT;g.fillStyle="#5a5148";
+  const lineas=mensaje.split("\n").flatMap(par=>envolver(g,par,w-160)).slice(0,4);
+  ty+=40;lineas.forEach(l=>{ty+=52;g.fillText(l,W/2,ty)});
+  ty+=40;g.strokeStyle="#e8b4a8";g.lineWidth=4;g.lineCap="round";
+  g.beginPath();g.moveTo(W/2-80,ty);g.lineTo(W/2+80,ty);g.stroke();
+  ty+=70;g.fillStyle="#d9534f";g.font="600 42px "+FONT;g.fillText("Con cariño de:",W/2,ty);
+  ty+=24;
+  const disp=(y+h-110)-ty,texto=unir(nombres);
+  let nf=48,ls=[];
+  for(;nf>=26;nf-=2){g.font="600 "+nf+"px "+FONT;ls=envolver(g,texto,w-160);if(ls.length*nf*1.35<=disp)break}
+  g.fillStyle="#2a2622";
+  ls.forEach(l=>{ty+=nf*1.35;g.fillText(l,W/2,ty)});
+  g.font="56px "+FONT;g.fillText("🎂 🎈 🎁",W/2,y+h-40);
+}
+let archivo=null,urlImg=null;
+function crearImagen(){
+  const c=calc();
+  const b=c.cum.find(p=>String(p.id)===$("selCumple").value)||c.cum[0];
+  if(!b)return;
+  const nombres=c.cont.filter(p=>c.isPaid(p)&&p.id!==b.id).map(p=>p.n).sort((a,z)=>a.localeCompare(z));
+  if(!nombres.length){alert("Todavía no hay pagos marcados para este mes. Marcá quiénes pagaron y volvé a probar.");return}
+  const cv=document.createElement("canvas");cv.width=1080;cv.height=1350;
+  dibujarTarjeta(cv.getContext("2d"),1080,1350,b.n,$("dedic").value.trim(),nombres);
+  cv.toBlob(bl=>{
+    const slug=b.n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").toLowerCase();
+    archivo=new File([bl],"feliz-cumple-"+slug+".png",{type:"image/png"});
+    if(urlImg)URL.revokeObjectURL(urlImg);
+    urlImg=URL.createObjectURL(bl);
+    $("imgOut").src=urlImg;$("imgOutBox").hidden=false;
+  },"image/png");
+}
+function descargarImagen(){
+  if(!archivo)return;
+  const a=document.createElement("a");a.href=urlImg;a.download=archivo.name;document.body.appendChild(a);a.click();a.remove();
+}
+async function compartirImagen(){
+  if(!archivo)return;
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[archivo]})){await navigator.share({files:[archivo],title:"¡Feliz cumpleaños!"});return}
+  }catch(e){if(e&&e.name==="AbortError")return}
+  descargarImagen();
+  alert("Tu navegador no permite compartir directo. La imagen se descargó: adjuntala en WhatsApp.");
+}
+$("mkImg").onclick=crearImagen;
+$("shImg").onclick=compartirImagen;
+$("dlImg").onclick=descargarImagen;
 
 /* ====== Código de oficina y arranque ====== */
 function gate(msg){
