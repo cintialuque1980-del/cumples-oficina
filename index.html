@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cumpleaños de la oficina</title>
+<meta name="theme-color" content="#d9534f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cumples">
+<style>
+:root{--bg:#faf8f5;--card:#fff;--tx:#2a2622;--mut:#7a7168;--bd:#e6dfd6;--ac:#d9534f;--ok:#2e8b57;--okbg:#e4f4ea;--hi:#fff4d6;--pend:#d98a1f;--pendbg:#fff1dc;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1917;--card:#262321;--tx:#f1ece6;--mut:#a39a90;--bd:#3a3631;--ac:#ef7a76;--ok:#5fc48a;--okbg:#1f3a2b;--hi:#3d3417;--pend:#e8a345;--pendbg:#3a2b14}}
+:root[data-theme="dark"]{--bg:#1b1917;--card:#262321;--tx:#f1ece6;--mut:#a39a90;--bd:#3a3631;--ac:#ef7a76;--ok:#5fc48a;--okbg:#1f3a2b;--hi:#3d3417;--pend:#e8a345;--pendbg:#3a2b14}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:.2em 0 .2em}
+h2{font-size:1rem;margin:0 0 .6em;color:var(--mut);font-weight:600}
+h3{font-size:.95rem;margin:14px 0 8px}
+h3.pendt{color:var(--pend);margin-top:4px}
+h3.okt{color:var(--ok)}
+#estado{display:block;color:var(--mut);font-size:.8rem;margin:0 0 .9em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,button,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
+button{cursor:pointer;background:var(--ac);color:#fff;border:0;font-weight:600}
+button.ghost{background:transparent;color:var(--mut);border:1px solid var(--bd);padding:6px 10px;font-weight:500}
+.nav{justify-content:space-between}
+.nav b{font-size:1.15rem;text-transform:capitalize}
+.sum{display:flex;gap:14px;align-items:center}
+.sum svg{flex:none;width:96px;height:96px}
+.stats{flex:1;display:grid;gap:6px}
+.stats div{display:flex;justify-content:space-between;align-items:baseline;background:var(--bg);border-radius:8px;padding:6px 10px}
+.stats small{color:var(--mut);font-size:.8rem}
+.stats strong{font-size:1.05rem}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.4em}
+.head h2{margin:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tile{display:flex;align-items:center;gap:8px;text-align:left;padding:8px;border-radius:10px;border:1.5px solid var(--bd);width:100%;font-weight:500;color:var(--tx)}
+.tile.pend{border-color:var(--pend);background:var(--pendbg)}
+.tile.ok{border-color:var(--ok);background:var(--okbg)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;flex:none}
+.pend .av{background:var(--pend)}
+.ok .av{background:var(--ok)}
+.tile .t{min-width:0;flex:1}
+.tile .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.95rem}
+.tile .t small{color:var(--mut);font-size:.75rem}
+.pr{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--bd)}
+.pr:last-child{border:0}
+.pr .n{flex:1;min-width:0}
+.pr small{color:var(--mut);display:block}
+.pr.editing{background:var(--hi);border-radius:8px}
+.x{background:transparent;color:var(--mut);padding:2px 8px;font-size:1.2rem}
+.empty{color:var(--mut);padding:8px 0}
+label.chk{display:flex;gap:8px;align-items:center;color:var(--mut);font-size:.9rem;margin-top:10px}
+.aviso{background:var(--hi);border-color:transparent}
+.aviso p{margin:.25em 0}
+textarea{width:100%;min-height:110px;resize:vertical;margin-bottom:8px}
+.hint{color:var(--mut);font-size:.8rem;margin:.5em 0 0}
+.err{color:var(--ac);font-size:.9rem;margin:.6em 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>🎂 Cumpleaños de la oficina</h1>
+<small id="estado"></small>
+
+<div class="card" id="gate" hidden>
+  <h2>Código de oficina</h2>
+  <div class="row">
+    <input id="code" type="password" placeholder="Ingresá el código" autocomplete="off" style="flex:1;min-width:160px">
+    <button id="gateBtn">Entrar</button>
+  </div>
+  <p class="err" id="gateErr" hidden></p>
+  <p class="hint">Lo pedimos una sola vez en cada dispositivo.</p>
+</div>
+
+<div id="app" hidden>
+
+<div class="card aviso" id="aviso" hidden></div>
+
+<div class="card">
+  <div class="row nav">
+    <button class="ghost" id="prev">‹</button>
+    <b id="mes"></b>
+    <button class="ghost" id="next">›</button>
+  </div>
+  <p id="cumples" style="margin:.8em 0 0;color:var(--mut)"></p>
+</div>
+
+<div class="card">
+  <div class="sum">
+    <svg id="ring" viewBox="0 0 96 96" role="img" aria-label="Progreso de pagos"></svg>
+    <div class="stats">
+      <div><small>Aporte por cumple</small><strong id="por"></strong></div>
+      <div><small>Recaudado</small><strong id="rec"></strong></div>
+      <div><small>Falta</small><strong id="fal"></strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="head">
+    <h2>Quién pagó</h2>
+    <div class="row">
+      <button class="ghost" id="all">Marcar todos</button>
+      <button class="ghost" id="none">Desmarcar todos</button>
+    </div>
+  </div>
+  <div id="board"></div>
+  <p class="hint">Tocá a una persona para marcarla como pagada (o para desmarcarla).</p>
+</div>
+
+<div class="card" id="recCard">
+  <h2>Mensaje recordatorio</h2>
+  <textarea id="msg" readonly></textarea>
+  <div class="row">
+    <button id="copy">Copiar</button>
+    <button id="wa">Enviar por WhatsApp</button>
+    <span id="copied" style="color:var(--ok);font-size:.9rem" hidden>¡Copiado!</span>
+  </div>
+</div>
+
+<div class="card" id="formCard">
+  <h2 id="formTitle">Agregar persona</h2>
+  <div class="row">
+    <input id="nom" placeholder="Nombre" style="flex:1;min-width:140px">
+    <input id="dia" type="number" min="1" max="31" placeholder="Día" style="width:70px">
+    <select id="mm"></select>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button id="add">Agregar</button>
+    <button class="ghost" id="cancel" hidden>Cancelar</button>
+  </div>
+  <h2 style="margin-top:16px">Personas cargadas</h2>
+  <div id="personas"></div>
+</div>
+
+<div class="card">
+  <h2>Configuración</h2>
+  <div class="row">
+    <span>Monto por cumpleaños (general): $</span>
+    <input id="monto" type="number" min="0" step="500" style="width:110px">
+  </div>
+  <div class="row" style="margin-top:10px">
+    <span>Monto solo para <b id="mesCfg"></b>: $</span>
+    <input id="montoMes" type="number" min="0" step="500" style="width:110px">
+    <button class="ghost" id="resetMes">Usar el general</button>
+  </div>
+  <p class="hint">Si lo dejás vacío, ese mes usa el monto general. Sirve para cumpleaños especiales.</p>
+  <label class="chk"><input type="checkbox" id="bp"> El cumpleañero también aporta para su propio cumpleaños</label>
+  <div class="row" style="margin-top:14px">
+    <button class="ghost" id="imp" hidden>Importar datos de este navegador</button>
+    <button class="ghost" id="salir">Salir (olvidar código)</button>
+  </div>
+</div>
+
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ====== Conexión (la clave publishable es pública; la protección es el código de oficina) ====== */
+const SUPA_URL="https://gxdvigzxbbmihbjcerro.supabase.co";
+const SUPA_KEY="sb_publishable_Rn5Y-qcQ2zHFsXHbYD6uCQ_svbZshj-";
+const CODE_KEY="cumples-codigo",OLD_KEY="cumples-oficina-v1",REFRESCO_MS=8000;
+
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+let db=null,timer=null,editId=null;
+let S={people:[],amount:10000,bp:true,paid:{},amounts:{}};
+const $=id=>document.getElementById(id);
+const money=n=>"$"+Math.round(n).toLocaleString("es-AR");
+const pad=n=>String(n).padStart(2,"0");
+const today=()=>{const t=new Date();return t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate())};
+const fmtFecha=iso=>{const a=String(iso).split("-");return a.length===3?(+a[2])+"/"+(+a[1]):""};
+const inicial=n=>(n.trim().charAt(0)||"?").toUpperCase();
+const now=new Date();let y=now.getFullYear(),m=now.getMonth();
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+const setEstado=ok=>{$("estado").textContent=ok?"🟢 Sincronizado":"⚠️ Sin conexión: mostrando los últimos datos"};
+
+$("mm").innerHTML=MESES.map((x,i)=>`<option value="${i}">${x}</option>`).join("");
+$("mm").value=m;
+
+/* ====== Base de datos ====== */
+const cliente=code=>supabase.createClient(SUPA_URL,SUPA_KEY,{global:{headers:{"x-office-code":code}},auth:{persistSession:false,autoRefreshToken:false}});
+
+async function load(){
+  const [a,b,c]=await Promise.all([
+    db.from("people").select("*"),
+    db.from("payments").select("*"),
+    db.from("settings").select("*").eq("id",1).maybeSingle()
+  ]);
+  if(a.error||b.error||c.error)throw new Error("red");
+  if(!c.data)throw new Error("codigo"); // sin fila = el código no pasó las reglas
+  S.people=a.data.map(r=>({id:r.id,n:r.name,d:r.day,m:r.month}));
+  S.paid={};b.data.forEach(r=>{S.paid[r.month_key+":"+r.person_id]=r.paid_on});
+  S.amount=+c.data.amount;S.bp=!!c.data.birthday_pays;S.amounts=c.data.month_amounts||{};
+}
+async function refrescarYa(){try{await load();setEstado(true)}catch(e){setEstado(false)}render()}
+async function refrescar(){
+  if(!db||document.hidden)return;
+  try{
+    await load();setEstado(true);
+    const a=document.activeElement;
+    if(!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))render(); // no pisar lo que se está escribiendo
+  }catch(e){setEstado(false)}
+}
+async function guardar(p){
+  try{const r=await p;if(r&&r.error)throw r.error}
+  catch(e){alert("No se pudo guardar: "+(e.message||e))}
+  await refrescarYa();
+}
+
+/* ====== Cálculo del mes ====== */
+function calc(){
+  const k=y+"-"+m;
+  const amt=S.amounts[k]!=null?+S.amounts[k]:S.amount;
+  const cum=S.people.filter(p=>p.m===m).sort((a,b)=>a.d-b.d);
+  const owed=p=>amt*cum.filter(c=>S.bp||c.id!==p.id).length;
+  const cont=S.people.filter(p=>owed(p)>0).sort((a,b)=>a.n.localeCompare(b.n));
+  const isPaid=p=>!!S.paid[k+":"+p.id];
+  const tot=cont.reduce((s,p)=>s+owed(p),0);
+  const rec=cont.filter(p=>isPaid(p)).reduce((s,p)=>s+owed(p),0);
+  return {k,amt,cum,owed,cont,isPaid,tot,rec};
+}
+function proximos(){
+  const t=new Date();t.setHours(0,0,0,0);const out=[];
+  S.people.forEach(p=>{
+    let dt=new Date(t.getFullYear(),p.m,p.d);
+    if(dt<t)dt=new Date(t.getFullYear()+1,p.m,p.d);
+    const diff=Math.round((dt-t)/864e5);
+    if(diff<=7)out.push({p,diff,dt});
+  });
+  return out.sort((a,b)=>a.diff-b.diff);
+}
+function renderAviso(){
+  const px=proximos(),box=$("aviso");
+  if(!px.length){box.hidden=true;return}
+  box.hidden=false;
+  box.innerHTML=px.map(({p,diff,dt})=>{
+    if(diff===0)return `<p>🎉 <b>Hoy cumple ${esc(p.n)}</b></p>`;
+    const cuando=diff===1?"mañana":`${DIAS[dt.getDay()]} ${dt.getDate()}/${dt.getMonth()+1} (en ${diff} días)`;
+    return `<p>🎈 ${esc(p.n)}: ${cuando}</p>`;
+  }).join("");
+}
+function armarMensaje(c){
+  if(!c.cum.length)return "No hay cumpleaños este mes.";
+  const pend=c.cont.filter(p=>!c.isPaid(p));
+  if(!pend.length)return "¡Colecta de "+MESES[m]+" completa! Gracias a todos 🎉";
+  return "Hola! 👋 Recordatorio de la colecta de cumpleaños de "+MESES[m]+" 🎂\n"
+    +"Cumplen: "+c.cum.map(p=>p.n+" ("+p.d+")").join(", ")+"\n"
+    +"Aporte por cumpleaños: "+money(c.amt)+"\n"
+    +"Todavía falta que aporten: "+pend.map(p=>p.n+" ("+money(c.owed(p))+")").join(", ")+"\n"
+    +"¡Gracias!";
+}
+function tile(p,c,paid){
+  const v=S.paid[c.k+":"+p.id];
+  const f=paid&&v?fmtFecha(v):"";
+  return `<button class="tile ${paid?"ok":"pend"}" data-id="${p.id}" title="${paid?"Tocar para desmarcar":"Tocar para marcar como pagado"}">`
+    +`<span class="av">${paid?"✓":esc(inicial(p.n))}</span>`
+    +`<span class="t"><b>${esc(p.n)}${p.m===m?" 🎂":""}</b><small>${money(c.owed(p))}${f?" · pagó "+f:""}</small></span></button>`;
+}
+
+/* ====== Pantalla ====== */
+function render(){
+  const c=calc();
+  const pend=c.cont.filter(p=>!c.isPaid(p)),ok=c.cont.filter(p=>c.isPaid(p));
+  $("mes").textContent=MESES[m]+" "+y;
+  $("mesCfg").textContent=MESES[m]+" "+y;
+  $("cumples").innerHTML=c.cum.length?c.cum.map(p=>`🎉 ${esc(p.n)} (${p.d})`).join(" · "):"Sin cumpleaños este mes";
+  const maxOwed=c.cont.reduce((s,p)=>Math.max(s,c.owed(p)),0);
+  $("por").textContent=money(maxOwed);
+  $("rec").textContent=money(c.rec);$("fal").textContent=money(c.tot-c.rec);
+  const C=2*Math.PI*36,pct=c.tot?c.rec/c.tot:0;
+  $("ring").innerHTML=`<circle cx="48" cy="48" r="36" fill="none" stroke="var(--bd)" stroke-width="10"/>`
+    +(pct>0?`<circle cx="48" cy="48" r="36" fill="none" stroke="var(--ok)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${pct*C} ${C}" transform="rotate(-90 48 48)"/>`:"")
+    +`<text x="48" y="47" text-anchor="middle" font-size="18" font-weight="700" fill="var(--tx)">${c.cont.length?ok.length+"/"+c.cont.length:"–"}</text>`
+    +`<text x="48" y="62" text-anchor="middle" font-size="10" fill="var(--mut)">pagaron</text>`;
+  if(!c.cont.length){
+    $("board").innerHTML='<div class="empty">'+(S.people.length?"Este mes no hay aportes que cobrar.":"Agregá personas para empezar.")+'</div>';
+  }else{
+    $("board").innerHTML=
+      `<h3 class="pendt">⏳ Faltan pagar (${pend.length})</h3>`
+      +(pend.length?`<div class="tiles">${pend.map(p=>tile(p,c,false)).join("")}</div>`:'<div class="empty">🎉 ¡Todos pagaron!</div>')
+      +`<h3 class="okt">✅ Ya pagaron (${ok.length})</h3>`
+      +(ok.length?`<div class="tiles">${ok.map(p=>tile(p,c,true)).join("")}</div>`:'<div class="empty">Todavía nadie pagó.</div>');
+  }
+  $("personas").innerHTML=S.people.length?[...S.people].sort((a,b)=>a.m-b.m||a.d-b.d).map(p=>
+    `<div class="pr${p.id===editId?" editing":""}"><div class="n">${esc(p.n)}<small>${p.d} de ${MESES[p.m]}</small></div>`
+    +`<button class="ghost" data-edit="${p.id}" title="Editar">✎</button>`
+    +`<button class="x" data-del="${p.id}" title="Quitar">×</button></div>`).join(""):'<div class="empty">Todavía no hay personas.</div>';
+  $("monto").value=S.amount;
+  $("montoMes").value=S.amounts[c.k]!=null?S.amounts[c.k]:"";
+  $("montoMes").placeholder=S.amount;
+  $("bp").checked=S.bp;
+  $("msg").value=armarMensaje(c);
+  $("recCard").hidden=!c.cum.length;
+  renderAviso();
+}
+
+$("prev").onclick=()=>{m--;if(m<0){m=11;y--}render()};
+$("next").onclick=()=>{m++;if(m>11){m=0;y++}render()};
+
+/* ====== Pagos ====== */
+$("board").onclick=e=>{
+  const t=e.target.closest("[data-id]");
+  if(!t)return;
+  const k=y+"-"+m,id=+t.dataset.id;
+  guardar(S.paid[k+":"+id]
+    ?db.from("payments").delete().eq("month_key",k).eq("person_id",id)
+    :db.from("payments").upsert({month_key:k,person_id:id,paid_on:today()}));
+};
+$("all").onclick=()=>{
+  const c=calc();
+  const rows=c.cont.filter(p=>!c.isPaid(p)).map(p=>({month_key:c.k,person_id:p.id,paid_on:today()}));
+  if(rows.length)guardar(db.from("payments").upsert(rows));
+};
+$("none").onclick=()=>{
+  const c=calc();
+  if(!c.cont.some(p=>c.isPaid(p)))return;
+  if(!confirm("¿Desmarcar todos los pagos de "+MESES[m]+"?"))return;
+  guardar(db.from("payments").delete().eq("month_key",c.k).in("person_id",c.cont.map(p=>p.id)));
+};
+
+/* ====== Personas ====== */
+function endEdit(){
+  editId=null;
+  $("nom").value="";$("dia").value="";$("mm").value=m;
+  $("formTitle").textContent="Agregar persona";
+  $("add").textContent="Agregar";
+  $("cancel").hidden=true;
+}
+function startEdit(id){
+  const p=S.people.find(q=>q.id==id);
+  if(!p)return;
+  editId=p.id;
+  $("nom").value=p.n;$("dia").value=p.d;$("mm").value=p.m;
+  $("formTitle").textContent="Editar persona";
+  $("add").textContent="Guardar cambios";
+  $("cancel").hidden=false;
+  render();
+  $("formCard").scrollIntoView({behavior:"smooth",block:"start"});
+  $("nom").focus();
+}
+$("cancel").onclick=()=>{endEdit();render()};
+$("personas").onclick=e=>{
+  const ed=e.target.closest("[data-edit]"),del=e.target.closest("[data-del]");
+  if(ed){startEdit(ed.dataset.edit);return}
+  if(del){
+    const p=S.people.find(q=>q.id==del.dataset.del);
+    if(p&&confirm("¿Quitar a "+p.n+"?")){
+      if(editId===p.id)endEdit();
+      guardar(db.from("people").delete().eq("id",p.id)); // sus pagos se borran solos
+    }
+  }
+};
+$("add").onclick=()=>{
+  const n=$("nom").value.trim(),d=+$("dia").value,mm=+$("mm").value;
+  const maxDia=new Date(2024,mm+1,0).getDate();
+  if(!n||!Number.isInteger(d)||d<1||d>maxDia){alert("Completá el nombre y un día válido (1-"+maxDia+" para "+MESES[mm]+").");return}
+  const row={name:n,day:d,month:mm};
+  const op=editId!==null?db.from("people").update(row).eq("id",editId):db.from("people").insert(row);
+  endEdit();guardar(op);
+};
+
+/* ====== Configuración ====== */
+$("monto").onchange=()=>guardar(db.from("settings").update({amount:Math.max(0,+$("monto").value||0)}).eq("id",1));
+$("montoMes").onchange=()=>{
+  const k=y+"-"+m,v=$("montoMes").value.trim(),mp={...S.amounts};
+  if(v==="")delete mp[k];else mp[k]=Math.max(0,+v||0);
+  guardar(db.from("settings").update({month_amounts:mp}).eq("id",1));
+};
+$("resetMes").onclick=()=>{const mp={...S.amounts};delete mp[y+"-"+m];guardar(db.from("settings").update({month_amounts:mp}).eq("id",1))};
+$("bp").onchange=()=>guardar(db.from("settings").update({birthday_pays:$("bp").checked}).eq("id",1));
+
+/* ====== Recordatorio ====== */
+$("copy").onclick=async()=>{
+  const txt=$("msg").value;
+  try{await navigator.clipboard.writeText(txt)}
+  catch(e){$("msg").removeAttribute("readonly");$("msg").select();document.execCommand("copy");$("msg").setAttribute("readonly","")}
+  $("copied").hidden=false;setTimeout(()=>{$("copied").hidden=true},1800);
+};
+$("wa").onclick=()=>{window.open("https://wa.me/?text="+encodeURIComponent($("msg").value),"_blank")};
+
+/* ====== Importar los datos que había en este navegador (una sola vez) ====== */
+let viejo=null;
+try{const r=localStorage.getItem(OLD_KEY);if(r){const o=JSON.parse(r);if(o&&o.people&&o.people.length)viejo=o}}catch(e){}
+$("imp").hidden=!viejo;
+$("imp").onclick=async()=>{
+  if(!viejo||!confirm("¿Importar "+viejo.people.length+" personas y sus pagos a la base compartida? Hacelo una sola vez."))return;
+  const r=await db.from("people").insert(viejo.people.map(p=>({name:p.n,day:p.d,month:p.m}))).select();
+  if(r.error){alert("No se pudo importar: "+r.error.message);return}
+  const map={};viejo.people.forEach((p,i)=>{map[p.id]=r.data[i].id});
+  const pays=[];
+  Object.entries(viejo.paid||{}).forEach(([k,v])=>{const [mk,id]=k.split(":");if(map[id])pays.push({month_key:mk,person_id:map[id],paid_on:typeof v==="string"?v:today()})});
+  if(pays.length)await db.from("payments").upsert(pays);
+  await db.from("settings").update({amount:viejo.amount||0,birthday_pays:viejo.bp!==false,month_amounts:viejo.amounts||{}}).eq("id",1);
+  try{localStorage.removeItem(OLD_KEY)}catch(e){}
+  viejo=null;$("imp").hidden=true;
+  await refrescarYa();alert("Listo: datos importados.");
+};
+
+/* ====== Código de oficina y arranque ====== */
+function gate(msg){
+  $("app").hidden=true;$("gate").hidden=false;
+  $("gateErr").hidden=!msg;$("gateErr").textContent=msg||"";
+  $("code").focus();
+}
+function entrar(){
+  $("gate").hidden=true;$("app").hidden=false;
+  render();
+  if(!timer)timer=setInterval(refrescar,REFRESCO_MS);
+}
+function olvidarCodigo(){try{localStorage.removeItem(CODE_KEY)}catch(e){}db=null;clearInterval(timer);timer=null}
+$("gateBtn").onclick=async()=>{
+  const code=$("code").value.trim();
+  if(!code)return;
+  db=cliente(code);
+  try{
+    await load();
+    try{localStorage.setItem(CODE_KEY,code)}catch(e){}
+    $("code").value="";setEstado(true);entrar();
+  }catch(e){gate(e.message==="codigo"?"Código incorrecto.":"No se pudo conectar. Revisá tu conexión e intentá de nuevo.")}
+};
+$("code").addEventListener("keydown",e=>{if(e.key==="Enter")$("gateBtn").click()});
+$("salir").onclick=()=>{if(confirm("¿Olvidar el código en este dispositivo? Te lo va a pedir de nuevo.")){olvidarCodigo();gate()}};
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refrescar()});
+window.addEventListener("online",refrescar);
+
+(async function iniciar(){
+  let code="";try{code=localStorage.getItem(CODE_KEY)||""}catch(e){}
+  if(!code){gate();return}
+  db=cliente(code);
+  try{await load();setEstado(true)}
+  catch(e){
+    if(e.message==="codigo"){olvidarCodigo();gate("El código guardado ya no es válido. Ingresá el nuevo.");return}
+    setEstado(false);
+  }
+  entrar();
+})();
+
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
