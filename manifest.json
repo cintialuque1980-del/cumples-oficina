@@ -1,0 +1,16 @@
+{
+  "name": "Cumpleaños de la oficina",
+  "short_name": "Cumples",
+  "description": "Organizá los cumpleaños del mes y los aportes de la oficina",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf8f5",
+  "theme_color": "#d9534f",
+  "lang": "es-AR",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
