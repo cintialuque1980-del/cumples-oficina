@@ -117,16 +117,17 @@ textarea{width:100%;min-height:110px;resize:vertical;margin-bottom:8px}
 </div>
 
 <div class="card" id="recCard">
-  <h2>Mensajes para WhatsApp</h2>
-  <select id="tipoMsg" style="width:100%;margin-bottom:8px">
-    <option value="inicio">📅 Inicio de mes: cumpleaños, total a pagar y alias</option>
-    <option value="recordatorio">⏳ Recordatorio: quiénes faltan pagar</option>
-  </select>
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <h2 style="margin:0">Mensajes para WhatsApp</h2>
+    <select id="tipoMsg" style="padding:4px 8px;font-size:0.9rem">
+      <option value="inicio">📅 Inicio de mes</option>
+      <option value="recordatorio">⏳ Recordatorio (deudores)</option>
+    </select>
+  </div>
   <textarea id="msg" readonly></textarea>
-  <p class="err" id="aliasWarn" hidden>⚠️ Todavía no hay un alias guardado: cargalo en Configuración para que aparezca en el mensaje.</p>
   <div class="row">
     <button id="copy">Copiar mensaje</button>
-    <button class="ghost" id="copyAlias" hidden>Copiar alias</button>
+    <button class="ghost" id="copyAlias">Copiar alias</button>
     <button id="wa">Enviar por WhatsApp</button>
     <span id="copied" style="color:var(--ok);font-size:.9rem" hidden>¡Copiado!</span>
   </div>
@@ -188,7 +189,7 @@ textarea{width:100%;min-height:110px;resize:vertical;margin-bottom:8px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-/* ====== Conexión (la clave publishable es pública; la protección es el código de oficina) ====== */
+/* ====== Conexión ====== */
 const SUPA_URL="https://gxdvigzxbbmihbjcerro.supabase.co";
 const SUPA_KEY="sb_publishable_Rn5Y-qcQ2zHFsXHbYD6uCQ_svbZshj-";
 const CODE_KEY="cumples-codigo",OLD_KEY="cumples-oficina-v1",REFRESCO_MS=8000;
@@ -220,7 +221,7 @@ async function load(){
     db.from("settings").select("*").eq("id",1).maybeSingle()
   ]);
   if(a.error||b.error||c.error)throw new Error("red");
-  if(!c.data)throw new Error("codigo"); // sin fila = el código no pasó las reglas
+  if(!c.data)throw new Error("codigo");
   S.people=a.data.map(r=>({id:r.id,n:r.name,d:r.day,m:r.month}));
   S.paid={};b.data.forEach(r=>{S.paid[r.month_key+":"+r.person_id]=r.paid_on});
   S.amount=+c.data.amount;S.bp=!!c.data.birthday_pays;S.amounts=c.data.month_amounts||{};S.alias=c.data.alias||"";
@@ -231,7 +232,7 @@ async function refrescar(){
   try{
     await load();setEstado(true);
     const a=document.activeElement;
-    if(!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))render(); // no pisar lo que se está escribiendo
+    if(!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))render();
   }catch(e){setEstado(false)}
 }
 async function guardar(p){
@@ -272,29 +273,30 @@ function renderAviso(){
     return `<p>🎈 ${esc(p.n)}: ${cuando}</p>`;
   }).join("");
 }
-function msgInicio(c){
+
+/* ====== Generación de Mensajes ====== */
+function armarMensaje(c){
   if(!c.cum.length)return "No hay cumpleaños este mes.";
-  const n=c.cum.length,total=c.amt*n;
-  const lista=c.cum.map(p=>"🎂 "+p.n+" – "+p.d+" de "+MESES[m]).join("\n");
-  let monto="💰 Total a pagar por persona: "+money(total);
-  if(n>1)monto+=" ("+money(c.amt)+" × "+n+" cumpleaños)";
-  if(!S.bp)monto+=n===1?"\n(El cumpleañero no aporta)":"\n(Los cumpleañeros aportan "+money(c.amt*(n-1))+", sin contar el propio)";
-  return "¡Hola a todos! 👋 Empieza "+MESES[m]+" y estos son los cumpleaños del mes:\n\n"+lista+"\n\n"+monto+"\n"
-    +(S.alias?"🏦 Alias para transferir: "+S.alias+"\n":"")
-    +"\nCuando transfieran, avísenme así lo registro. ¡Gracias! 🎉";
+  const tipo=$("tipoMsg").value;
+  
+  if(tipo==="inicio"){
+    const maxOwed=c.cont.reduce((s,p)=>Math.max(s,c.owed(p)),0);
+    return "Hola a todos! 👋 Empieza "+MESES[m]+" y estos son los cumpleaños del mes:\n\n"
+      +c.cum.map(p=>"🎂 "+p.n+" – "+p.d+" de "+MESES[m]).join("\n")+"\n\n"
+      +"💰 Aporte por cumpleaños: "+money(maxOwed)+"\n"
+      +(S.alias?"🏦 Alias para transferir: "+S.alias+"\n":"")
+      +"\nCuando transfieran, avísenme así lo registro. ¡Gracias! 🎉";
+  }else{
+    const pend=c.cont.filter(p=>!c.isPaid(p));
+    if(!pend.length)return "¡Colecta de "+MESES[m]+" completa! Gracias a todos 🎉";
+    return "Hola! 👋 Recordatorio de la colecta de cumpleaños de "+MESES[m]+" 🎂\n"
+      +"Todavía falta que aporten:\n"
+      +pend.map(p=>"• "+p.n+" ("+money(c.owed(p))+")").join("\n")+"\n"
+      +(S.alias?"\nAlias para transferir: "+S.alias+"\n":"")
+      +"\n¡Gracias!";
+  }
 }
-function armarMensaje(c){return $("tipoMsg").value==="inicio"?msgInicio(c):msgRecordatorio(c)}
-function msgRecordatorio(c){
-  if(!c.cum.length)return "No hay cumpleaños este mes.";
-  const pend=c.cont.filter(p=>!c.isPaid(p));
-  if(!pend.length)return "¡Colecta de "+MESES[m]+" completa! Gracias a todos 🎉";
-  return "Hola! 👋 Recordatorio de la colecta de cumpleaños de "+MESES[m]+" 🎂\n"
-    +"Cumplen: "+c.cum.map(p=>p.n+" ("+p.d+")").join(", ")+"\n"
-    +"Aporte por cumpleaños: "+money(c.amt)+"\n"
-    +(S.alias?"Alias para transferir: "+S.alias+"\n":"")
-    +"Todavía falta que aporten: "+pend.map(p=>p.n+" ("+money(c.owed(p))+")").join(", ")+"\n"
-    +"¡Gracias!";
-}
+
 function tile(p,c,paid){
   const v=S.paid[c.k+":"+p.id];
   const f=paid&&v?fmtFecha(v):"";
@@ -335,9 +337,8 @@ function render(){
   $("montoMes").value=S.amounts[c.k]!=null?S.amounts[c.k]:"";
   $("montoMes").placeholder=S.amount;
   $("bp").checked=S.bp;
-  $("alias").value=S.alias;$("copyAlias").hidden=!S.alias;
+  $("alias").value=S.alias;
   $("msg").value=armarMensaje(c);
-  $("aliasWarn").hidden=!!S.alias;
   $("recCard").hidden=!c.cum.length;
   const sel=$("selCumple"),antes=sel.value;
   sel.innerHTML=c.cum.map(p=>`<option value="${p.id}">🎂 ${esc(p.n)} (${p.d} de ${MESES[m]})</option>`).join("");
@@ -348,6 +349,7 @@ function render(){
 
 $("prev").onclick=()=>{m--;if(m<0){m=11;y--}$("imgOutBox").hidden=true;render()};
 $("next").onclick=()=>{m++;if(m>11){m=0;y++}$("imgOutBox").hidden=true;render()};
+$("tipoMsg").onchange=()=>render();
 
 /* ====== Pagos ====== */
 $("board").onclick=e=>{
@@ -398,7 +400,7 @@ $("personas").onclick=e=>{
     const p=S.people.find(q=>q.id==del.dataset.del);
     if(p&&confirm("¿Quitar a "+p.n+"?")){
       if(editId===p.id)endEdit();
-      guardar(db.from("people").delete().eq("id",p.id)); // sus pagos se borran solos
+      guardar(db.from("people").delete().eq("id",p.id));
     }
   }
 };
@@ -420,28 +422,25 @@ $("montoMes").onchange=()=>{
 };
 $("resetMes").onclick=()=>{const mp={...S.amounts};delete mp[y+"-"+m];guardar(db.from("settings").update({month_amounts:mp}).eq("id",1))};
 $("bp").onchange=()=>guardar(db.from("settings").update({birthday_pays:$("bp").checked}).eq("id",1));
-$("alias").onchange=async()=>{
-  const r=await db.from("settings").update({alias:$("alias").value.trim()}).eq("id",1);
-  if(r.error)alert("No se pudo guardar el alias. Probablemente falta crear la columna 'alias' en Supabase (SQL Editor). Detalle: "+r.error.message);
-  await refrescarYa();
-};
+$("alias").onchange=()=>guardar(db.from("settings").update({alias:$("alias").value.trim()}).eq("id",1));
 
-/* ====== Recordatorio ====== */
-$("tipoMsg").onchange=render;
+/* ====== Recordatorio y Copiado ====== */
 $("copy").onclick=async()=>{
   const txt=$("msg").value;
   try{await navigator.clipboard.writeText(txt)}
   catch(e){$("msg").removeAttribute("readonly");$("msg").select();document.execCommand("copy");$("msg").setAttribute("readonly","")}
+  $("copied").textContent="¡Copiado!";
   $("copied").hidden=false;setTimeout(()=>{$("copied").hidden=true},1800);
 };
 $("copyAlias").onclick=async()=>{
+  if(!S.alias){alert("No hay ningún alias configurado.");return}
   try{await navigator.clipboard.writeText(S.alias)}catch(e){prompt("Copiá el alias:",S.alias)}
-  $("copied").textContent="¡Alias copiado!";$("copied").hidden=false;
-  setTimeout(()=>{$("copied").hidden=true;$("copied").textContent="¡Copiado!"},1800);
+  $("copied").textContent="¡Alias copiado!";
+  $("copied").hidden=false;setTimeout(()=>{$("copied").hidden=true},1800);
 };
 $("wa").onclick=()=>{window.open("https://wa.me/?text="+encodeURIComponent($("msg").value),"_blank")};
 
-/* ====== Importar los datos que había en este navegador (una sola vez) ====== */
+/* ====== Importar los datos previos (si aplica) ====== */
 let viejo=null;
 try{const r=localStorage.getItem(OLD_KEY);if(r){const o=JSON.parse(r);if(o&&o.people&&o.people.length)viejo=o}}catch(e){}
 $("imp").hidden=!viejo;
