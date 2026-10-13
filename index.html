@@ -117,8 +117,13 @@ textarea{width:100%;min-height:110px;resize:vertical;margin-bottom:8px}
 </div>
 
 <div class="card" id="recCard">
-  <h2>Mensaje recordatorio</h2>
+  <h2>Mensajes para WhatsApp</h2>
+  <select id="tipoMsg" style="width:100%;margin-bottom:8px">
+    <option value="inicio">📅 Inicio de mes: cumpleaños, total a pagar y alias</option>
+    <option value="recordatorio">⏳ Recordatorio: quiénes faltan pagar</option>
+  </select>
   <textarea id="msg" readonly></textarea>
+  <p class="err" id="aliasWarn" hidden>⚠️ Todavía no hay un alias guardado: cargalo en Configuración para que aparezca en el mensaje.</p>
   <div class="row">
     <button id="copy">Copiar mensaje</button>
     <button class="ghost" id="copyAlias" hidden>Copiar alias</button>
@@ -267,7 +272,19 @@ function renderAviso(){
     return `<p>🎈 ${esc(p.n)}: ${cuando}</p>`;
   }).join("");
 }
-function armarMensaje(c){
+function msgInicio(c){
+  if(!c.cum.length)return "No hay cumpleaños este mes.";
+  const n=c.cum.length,total=c.amt*n;
+  const lista=c.cum.map(p=>"🎂 "+p.n+" – "+p.d+" de "+MESES[m]).join("\n");
+  let monto="💰 Total a pagar por persona: "+money(total);
+  if(n>1)monto+=" ("+money(c.amt)+" × "+n+" cumpleaños)";
+  if(!S.bp)monto+=n===1?"\n(El cumpleañero no aporta)":"\n(Los cumpleañeros aportan "+money(c.amt*(n-1))+", sin contar el propio)";
+  return "¡Hola a todos! 👋 Empieza "+MESES[m]+" y estos son los cumpleaños del mes:\n\n"+lista+"\n\n"+monto+"\n"
+    +(S.alias?"🏦 Alias para transferir: "+S.alias+"\n":"")
+    +"\nCuando transfieran, avísenme así lo registro. ¡Gracias! 🎉";
+}
+function armarMensaje(c){return $("tipoMsg").value==="inicio"?msgInicio(c):msgRecordatorio(c)}
+function msgRecordatorio(c){
   if(!c.cum.length)return "No hay cumpleaños este mes.";
   const pend=c.cont.filter(p=>!c.isPaid(p));
   if(!pend.length)return "¡Colecta de "+MESES[m]+" completa! Gracias a todos 🎉";
@@ -320,6 +337,7 @@ function render(){
   $("bp").checked=S.bp;
   $("alias").value=S.alias;$("copyAlias").hidden=!S.alias;
   $("msg").value=armarMensaje(c);
+  $("aliasWarn").hidden=!!S.alias;
   $("recCard").hidden=!c.cum.length;
   const sel=$("selCumple"),antes=sel.value;
   sel.innerHTML=c.cum.map(p=>`<option value="${p.id}">🎂 ${esc(p.n)} (${p.d} de ${MESES[m]})</option>`).join("");
@@ -402,9 +420,14 @@ $("montoMes").onchange=()=>{
 };
 $("resetMes").onclick=()=>{const mp={...S.amounts};delete mp[y+"-"+m];guardar(db.from("settings").update({month_amounts:mp}).eq("id",1))};
 $("bp").onchange=()=>guardar(db.from("settings").update({birthday_pays:$("bp").checked}).eq("id",1));
-$("alias").onchange=()=>guardar(db.from("settings").update({alias:$("alias").value.trim()}).eq("id",1));
+$("alias").onchange=async()=>{
+  const r=await db.from("settings").update({alias:$("alias").value.trim()}).eq("id",1);
+  if(r.error)alert("No se pudo guardar el alias. Probablemente falta crear la columna 'alias' en Supabase (SQL Editor). Detalle: "+r.error.message);
+  await refrescarYa();
+};
 
 /* ====== Recordatorio ====== */
+$("tipoMsg").onchange=render;
 $("copy").onclick=async()=>{
   const txt=$("msg").value;
   try{await navigator.clipboard.writeText(txt)}
