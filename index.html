@@ -281,7 +281,7 @@ function armarMensaje(c){
   
   if(tipo==="inicio"){
     const maxOwed=c.cont.reduce((s,p)=>Math.max(s,c.owed(p)),0);
-    return "Hola a todos! 👋 Empieza "+MESES[m]+" y estos son los cumpleaños del mes:\n\n"
+    return "Buen día a todos! 👋 Empieza "+MESES[m]+" y estos son los cumpleaños del mes:\n\n"
       +c.cum.map(p=>"🎂 "+p.n+" – "+p.d+" de "+MESES[m]).join("\n")+"\n\n"
       +"💰 Aporte por cumpleaños: "+money(maxOwed)+"\n"
       +(S.alias?"🏦 Alias para transferir: "+S.alias+"\n":"")
